@@ -1,0 +1,1015 @@
+Microsoft (R) Macro Assembler Version 14.29.30146.0	    12/11/22 16:27:25
+task.asm						     Page 1 - 1
+
+
+				include irvine32.inc
+			      C ; Include file for Irvine32.lib             (Irvine32.inc)
+			      C 
+			      C ;OPTION CASEMAP:NONE		; optional: make identifiers case-sensitive
+			      C 
+			      C INCLUDE SmallWin.inc		; MS-Windows prototypes, structures, and constants
+			      C .NOLIST
+			      C .LIST
+			      C 
+			      C INCLUDE VirtualKeys.inc
+			      C ; VirtualKeys.inc
+			      C .NOLIST
+			      C .LIST
+			      C 
+			      C 
+			      C .NOLIST
+			      C .LIST
+			      C 
+ 00000000			.data
+				;	INPUT FILE HAS TO BE IN DOUBLE SPACE FORMAT
+
+ 00000000 00000000		filehandle dword ?;											//
+ 00000004 69 6E 70 75 74	inputfile byte "input.txt",0;								////
+	   2E 74 78 74 00
+				;															//////
+ 0000000E 6C 69 73 74 6F	listofadjectivesfile byte "listofadjectives.txt",0;			////////
+	   66 61 64 6A 65
+	   63 74 69 76 65
+	   73 2E 74 78 74
+	   00
+ 00000023 61 64 6A 65 63	adjectivefile byte "adjective.txt",0;						//////////
+	   74 69 76 65 2E
+	   74 78 74 00
+				;															////////////
+ 00000031 6C 69 73 74 6F	listofverbsfile byte "listofverbs.txt",0;					//////////////
+	   66 76 65 72 62
+	   73 2E 74 78 74
+	   00
+ 00000041 76 65 72 62 2E	verbfile byte "verb.txt",0;									////////////////
+	   74 78 74 00
+				;															//////////////////
+ 0000004A 6C 69 73 74 6F	listofpronounsfile byte "listofpronouns.txt",0;				////////////////////
+	   66 70 72 6F 6E
+	   6F 75 6E 73 2E
+	   74 78 74 00
+ 0000005D 70 72 6F 6E 6F	pronounfile byte "pronoun.txt",0;							//////////////////////			DECLARING FILES TO BE USED IN THIS PROGRAM
+	   75 6E 2E 74 78
+	   74 00
+				;															//////////////////////
+ 00000069 6C 69 73 74 6F	listofadverbsfile byte "listofadverbs.txt",0;				////////////////////
+	   66 61 64 76 65
+	   72 62 73 2E 74
+	   78 74 00
+ 0000007B 61 64 76 65 72	adverbfile byte "adverb.txt",0;								//////////////////
+	   62 2E 74 78 74
+	   00
+				;															////////////////
+ 00000086 6C 69 73 74 6F	listofconjunctionsfile byte "listofconjunctions.txt",0;		//////////////
+	   66 63 6F 6E 6A
+	   75 6E 63 74 69
+	   6F 6E 73 2E 74
+	   78 74 00
+ 0000009D 63 6F 6E 6A 75	conjunctionfile byte "conjunction.txt",0;					////////////
+	   6E 63 74 69 6F
+	   6E 2E 74 78 74
+	   00
+				;															//////////
+ 000000AD 6C 69 73 74 6F	listofprepositionsfile byte "listofprepositions.txt",0;		////////
+	   66 70 72 65 70
+	   6F 73 69 74 69
+	   6F 6E 73 2E 74
+	   78 74 00
+ 000000C4 70 72 65 70 6F	prepositionfile byte "preposition.txt",0;					//////
+	   73 69 74 69 6F
+	   6E 2E 74 78 74
+	   00
+				;															////
+ 000000D4 6E 6F 75 6E 2E	nounfile byte "noun.txt",0;									//
+	   74 78 74 00
+
+
+ 000000DD 53 74 61 72 74	s1 byte "Starting...",0
+	   69 6E 67 2E 2E
+	   2E 00
+ 000000E9 46 69 6E 69 73	s2 byte "Finished",0
+	   68 65 64 00
+
+ 000000F2 00000000		found dword 0 ; boolean variable to check if a word has been found as a part of speech or not
+
+ 000000F6  00002710 [		inputarray word 10000 dup(0);								//
+	    0000
+	   ]
+ 00004F16  00002710 [		listofadjectives word 10000 dup(0);							////
+	    0000
+	   ]
+ 00009D36  00002710 [		listofverbs word 10000 dup(0);								//////
+	    0000
+	   ]
+ 0000EB56  00002710 [		listofpronouns word 10000 dup(0);							////////       DECLARING ARRAYS OF STRINGS THAT WILL HOLD DATA READ FROM EACH FILE
+	    0000
+	   ]
+ 00013976  00002710 [		listofadverbs word 10000 dup(0);							//////
+	    0000
+	   ]
+ 00018796  00002710 [		listofconjunctions word 10000 dup(0);						////
+	    0000
+	   ]
+ 0001D5B6  00002710 [		listofprepositions word 10000 dup(0);						//
+	    0000
+	   ]
+
+
+ 000223D6  00000019 [		wordfromdataarray word 25 dup(0)     ;stores individual urdu word from the grammar data arrays defined above
+	    0000
+	   ]
+ 00022408  00000019 [		wordfrominputarray word 25 dup(0)    ;stored individual urdu word from the input data array defined above
+	    0000
+	   ]
+
+ 0002243A  000003E8 [		adjectivesfound word 1000 dup(0)	 ;stores the list of adjectives found from input
+	    0000
+	   ]
+ 00022C0A 00000000		numofadj dword 0					 ;stores the size of the above list	
+
+ 00022C0E  000003E8 [		verbsfound word 1000 dup(0)			 ;stores the list of verbs found from input
+	    0000
+	   ]
+ 000233DE 00000000		numofverb dword 0					 ;stores the size of the above list	
+
+ 000233E2  000003E8 [		pronounsfound word 1000 dup(0)		 ;stores the list of pronouns found from input
+	    0000
+	   ]
+ 00023BB2 00000000		numofpronoun dword 0				 ;stores the size of the above list	
+
+ 00023BB6  000003E8 [		adverbsfound word 1000 dup(0)		 ;stores the list of adverbs found from input
+	    0000
+	   ]
+ 00024386 00000000		numofadverb dword 0					 ;stores the size of the above list	
+
+ 0002438A  000003E8 [		conjunctionsfound word 1000 dup(0)	 ;stores the list of conjunction found from input
+	    0000
+	   ]
+ 00024B5A 00000000		numofconjunction dword 0			 ;stores the size of the above list	
+
+ 00024B5E  000003E8 [		prepositionsfound word 1000 dup(0)	 ;stores the list of prepositions found from input
+	    0000
+	   ]
+ 0002532E 00000000		numofpreposition dword 0			 ;stores the size of the above list	
+
+ 00025332  000003E8 [		nounsfound word 1000 dup(0)			 ;stores the list of nouns found from input
+	    0000
+	   ]
+ 00025B02 00000000		numofnoun dword 0					 ;stores the size of the above list	
+
+
+
+
+ 00000000			.code
+				part_of_speech_detector proto, bigstr:ptr word,bigsize:dword,smallstr:ptr word,listoffound:ptr word,numoffound: ptr dword
+				;bigstr is the dataarray containing all parts of speech data (for ex: listofadjectives)
+				;bigsize is the size of bigstr
+				;small str is the individual urdu word to find if it exists in the bigstr
+				;listoffound is the array that will store smalstr if it is found (for ex: adjectivesfound)
+				;numoffound is the size of the above array. It is passed as reference to get updated in the function once a part of speech is found
+
+
+				get_data proto, filename:ptr byte,destination:ptr word
+				write_part_of_speech_to_file proto,filename:ptr byte,source:ptr word,sizetowrite :dword
+
+
+ 00000000			main proc
+
+ 00000000  BA 000000DD R	mov edx,offset s1
+ 00000005  E8 00000000 E	call writestring
+ 0000000A  E8 00000000 E	call crlf
+
+				invoke get_data, offset inputfile,offset inputarray;						//		
+				;																			////
+				invoke get_data, offset listofadjectivesfile,offset listofadjectives;		//////
+				;																			////////
+				invoke get_data, offset listofverbsfile,offset listofverbs;					//////////
+				;																			////////////
+				invoke get_data, offset listofpronounsfile,offset listofpronouns;			//////////////		CALLING FUNCTION TO COLLECT THE DATA FROM THE FILES INTO THE ARRAYS 
+				;																			////////////
+				invoke get_data, offset listofadverbsfile,offset listofadverbs;				//////////
+				;																			////////
+				invoke get_data, offset listofconjunctionsfile,offset listofconjunctions;	//////
+				;																			////
+				invoke get_data, offset listofprepositionsfile,offset listofprepositions;	//
+
+
+
+
+
+
+
+
+				invoke str_length,addr inputarray   ;stores input array length in eax
+ 00000082  8B C8		mov ecx,eax							;the whole process will happen for the size of the input array. This size will not be 10,000 but it will be the actual numbers of characters read from file, hence being more efficient
+ 00000084  BE 00000000		mov esi,0						;used as index of input data array
+ 00000089  BF 00000000		mov edi,0						;used as index of the wordfrominputarray that will store the individual urdu word from input array
+ 0000008E			loop_for_input_array:
+ 0000008E  66| 8B 86			mov ax,inputarray[esi]		;individual characters are read and then put into ax
+	   000000F6 R
+ 00000095  66| 3D 2020			cmp ax,2020h				;if the character read is a space (double space is denoted by 2020 in heaxa)
+ 00000099  74 19			je checkforpartofspeech		;then word has been built and we can now check for the part of speech it is
+ 0000009B  66| 83 F8 00			cmp ax,0					;else if the character read is a null
+ 0000009F  0F 84 00000177		je store_to_files					;then input array data is all read and we can move on to saving the parts of speech into our files
+ 000000A5  66| 89 87			mov wordfrominputarray[edi],ax ;else store it into wordfrominputarray so each individual word is build using charcters read from input array
+	   00022408 R
+ 000000AC  83 C7 02			add edi,2					;incrementing by 2 to point to next index as it is a WORD 
+ 000000AF  E9 0000015B			jmp loopback_loop_for_input_array
+
+ 000000B4				checkforpartofspeech:
+											
+ 000000B4  60					pushad   ;storing all registers on stack as partofspeechdetector uses pretty much all registers whose current values need to be saved
+
+
+						invoke str_length,addr listofadjectives		;getting exact size of listofadjectives instead of 10000 to be more efficient							//
+ 000000BF  8B D8				mov ebx,eax;																																		////		CHECKS IF THE WORD IS AN ADJECTIVE						////
+						invoke part_of_speech_detector,offset listofadjectives,ebx,offset wordfrominputarray,offset adjectivesfound,offset numofadj; by reference			//	
+
+
+
+
+
+						invoke str_length,addr listofverbs			;getting exact size of listofverbs instead of 10000 to be more efficient								//
+ 000000E5  8B D8				mov ebx,eax;																																		////		CHECKS IF THE WORD IS A VERB
+						invoke part_of_speech_detector,offset listofverbs,ebx ,offset wordfrominputarray,offset verbsfound,offset numofverb;								//
+
+
+
+
+
+						invoke str_length,addr listofprepositions	;getting exact size of listofprepositions instead of 10000 to be more efficient							//
+ 0000010B  8B D8				mov ebx,eax;																																		////		CHECKS IF THE WORD IS A PREPOSITION
+						invoke part_of_speech_detector,offset listofprepositions,ebx ,offset wordfrominputarray,offset prepositionsfound,offset numofpreposition;			//
+
+
+
+
+
+						invoke str_length,addr listofpronouns		;getting exact size of listofpronouns instead of 10000 to be more efficient								//
+ 00000131  8B D8				mov ebx,eax;																																		////			CHECKS IF THE WORD IS A PRONOUN
+						invoke part_of_speech_detector,offset listofpronouns,ebx ,offset wordfrominputarray,offset pronounsfound,offset numofpronoun;						//
+
+
+
+
+						
+						invoke str_length,addr listofadverbs		;getting exact size of listofadverbs instead of 10000 to be more efficient								//
+ 00000157  8B D8				mov ebx,eax;																																		////			CHECKS IF THE WORD IS AN ADVERB
+						invoke part_of_speech_detector,offset listofadverbs,ebx ,offset wordfrominputarray,offset adverbsfound,offset numofadverb;							//
+
+
+
+
+
+						invoke str_length,addr listofconjunctions	;getting exact size of listofconjunctions instead of 10000 to be more efficient							//
+ 0000017D  8B D8				mov ebx,eax	;																																		////			CHECKS IF THE WORD IS A CONJUNCTION
+						invoke part_of_speech_detector,offset listofconjunctions,ebx ,offset wordfrominputarray,offset conjunctionsfound,offset numofconjunction;			//
+
+
+ 00000199  61					popad ;retreiving register values
+
+
+ 0000019A  83 3D 000000F2 R			cmp found,0   ;if the word was not found in any of the parts of speech above, then it must be  noun
+	   00
+
+ 000001A1  75 4B				jnz continuelabel  ;else continue to forming next word
+						
+ 000001A3  60							pushad
+										
+										
+										invoke str_length,addr nounsfound			
+ 000001AE  8B F8								mov edi,eax						 ;edi will be used as index of nounsfound, it is not set to 0, it is set to the existing size as we have to APPEND to the array
+									
+ 000001B0  BE 00000000								mov esi,0						 ;esi is used as index for wordfrominputarray
+										invoke str_length,addr wordfrominputarray    
+ 000001BF  50									push eax      ;storing the size on stack so can be used later 
+ 000001C0  8B C8								mov ecx,eax
+ 000001C2  D1 E9								shr ecx,1						;this loop is run for word array copying, so the size is divided by 2
+							
+
+ 000001C4								append_to_noun:
+ 000001C4  66| 8B 86								mov ax,wordfrominputarray[esi];			//
+	   00022408 R
+ 000001CB  66| 89 87								mov nounsfound[edi],ax;					////
+	   00025332 R
+ 000001D2  83 C7 02								add edi,2;								//////   the word that was not found as any part of speech will be a noun and hence appended to the nounsfound array
+ 000001D5  83 C6 02								add esi,2;								////
+ 000001D8  E2 EA								loop append_to_noun;					//
+
+ 000001DA  66| C7 87								mov word ptr nounsfound[edi],000Ah; adding a newline to the end of the array
+	   00025332 R
+	   000A
+ 000001E3  58									pop eax			;size retreived
+ 000001E4  83 C0 01								add eax,1		; for newline character just added
+ 000001E7  01 05 00025B02 R							add numofnoun,eax		;updating	
+										
+						
+ 000001ED  61							popad
+
+
+
+ 000001EE					continuelabel:
+						
+					
+ 000001EE  C7 05 000000F2 R			mov found,0 ;resetting found to false
+	   00000000
+
+ 000001F8  BF 00000000				mov edi,0  ;resetting edi to 0
+
+ 000001FD  51					push ecx;														//
+ 000001FE  B9 00000018				mov ecx,24			;using ecx as index so starts at 24			////
+ 00000203					reset_word_input:;												//////
+ 00000203  66| C7 81					mov wordfrominputarray[ecx],0;								//////			resetting string to empty again to get ready for next word
+	   00022408 R
+	   0000
+ 0000020C  E2 F5					loop reset_word_input;										////
+ 0000020E  59						pop ecx;													//
+
+ 0000020F				loopback_loop_for_input_array:
+ 0000020F  83 C6 02			add esi,2     ;update esi to point to next WORD
+ 00000212  49				dec ecx			;i didn't use a loop instruction here as it gave an error of "jump too far" so i decremented ecx and compared it to 0 manually
+ 00000213  83 F9 00			cmp ecx,0
+ 00000216  0F 85 FFFFFE72		jne loop_for_input_array
+
+
+
+
+
+
+
+ 0000021C			store_to_files:
+
+				invoke write_part_of_speech_to_file,offset adjectivefile,offset adjectivesfound,numofadj;					//
+				;																											////
+				invoke write_part_of_speech_to_file,offset verbfile,offset verbsfound,numofverb;							//////
+				;																											////////
+				invoke write_part_of_speech_to_file,offset pronounfile,offset pronounsfound,numofpronoun;					//////////
+				;																											////////////
+				invoke write_part_of_speech_to_file,offset adverbfile,offset adverbsfound,numofadverb;						//////////////			STORING THE WORDS INTO THE RESPECTIVE PARTS OF SPEECH FILES
+				;																											////////////
+				invoke write_part_of_speech_to_file,offset conjunctionfile,offset conjunctionsfound,numofconjunction;		//////////
+				;																											////////
+				invoke write_part_of_speech_to_file,offset prepositionfile,offset prepositionsfound,numofpreposition;		//////
+				;																											////
+				invoke write_part_of_speech_to_file,offset nounfile,offset nounsfound,numofnoun;							//
+
+
+
+
+
+
+ 000002AF			exitlabel:
+ 000002AF  BA 000000E9 R	mov edx,offset s2
+ 000002B4  E8 00000000 E	call writestring
+				exit
+
+ 000002C0			main endp
+
+ 000002C0			part_of_speech_detector proc, bigstr:ptr word,bigsize:dword,smallstr:ptr word,listoffound:ptr word,numoffound: ptr dword  
+				LOCAL sizeofword:dword  ;stores size of individual word read from part_of_speech data array (bigstr) (for ex: listofadjectives)
+
+ 000002C6  8B 75 08		mov esi,bigstr   ;esi will be used as reference to bigstr	(for ex: listofadjectives)
+ 000002C9  8B 7D 10		mov edi,smallstr ;edi will be used as reference to smallstr	(the individual word to find in bigstr, sent from main)
+
+ 000002CC  8B 4D 0C		mov ecx,bigsize ;the process below will run till the size of bigstr(actual size, not total amount of size allocated to it as more efficient this way,also sent from main)
+ 000002CF  BB 00000000		mov ebx,0		;ebx is used as index of bigstr
+ 000002D4  BA 00000000		mov edx,0		;edx is used as index of smallstr
+					
+ 000002D9			part_of_speech_detector_L1:
+					
+ 000002D9  66| 8B 04 1E			mov ax,[esi+ebx]	;individual characters are read and then put into ax
+ 000002DD  66| 3D 2020			cmp ax,2020h		;if the character read is a space
+ 000002E1  74 19			je compare_word		;then word has been built and we can now check if it is same as the smallstr passed to function
+ 000002E3  66| 83 F8 00			cmp ax,0			;else if the character read is a null
+ 000002E7  0F 84 000000AD		je exit_function	;then bigstr data is all read and we can exit the function
+
+ 000002ED  66| 89 82			mov wordfromdataarray[edx],ax ;else store it into wordfromdataarray so each individual word is build using characters read from bigstr array (e.g listofadjectives)
+	   000223D6 R
+ 000002F4  83 C2 02			add edx,2						;incrementing by 2 to point to next index as it is a WORD 
+ 000002F7  E9 00000088			jmp loopback
+ 000002FC				compare_word:
+						
+ 000002FC  60					pushad				;storing all registers on stack as next step uses pretty much all registers whose current values need to be saved
+					
+ 000002FD  66| C7 82					mov wordfromdataarray[edx],0h  ;adding  null terminator character at the end. Garbage character outputted before urdu word otherwise
+	   000223D6 R
+	   0000
+ 00000306  BE 000223D6 R				mov esi,offset wordfromdataarray
+							invoke str_length,addr wordfromdataarray  ;eax stores length wordofarray
+ 00000315  83 E8 01					sub eax,1   ;so that the null character added doesn't get compared
+ 00000318  89 45 FC					mov sizeofword,eax
+ 0000031B  8B C8					mov ecx,eax   
+ 0000031D  F3/ A6					repe cmpsb   ;compare word built with smallstr /if cmpsw to be used then divide ecx by 2
+ 0000031F  74 02					je write_to_part_of_speech_found_array	;if they match then add it to the respective part_of_speech_found array (ex: adjectivesfound)
+ 00000321  75 49					jne exitcompare			;else prepare to build next word
+
+ 00000323						write_to_part_of_speech_found_array:
+
+ 00000323  C7 05 000000F2 R						mov found,1  ;the word was found in the respective part_of_speech data array
+	   00000001
+
+ 0000032D  8B 5D 14							mov ebx,listoffound   ;ebx will be used as reference to the part_of_speech_found array
+ 00000330  8B 55 18							mov edx,numoffound
+ 00000333  8B 3A							mov edi,[edx]		  ;edi will be used as index of listoffound, it is not set to 0, it is set to the existing size as we have to APPEND to the array
+									
+ 00000335  BE 00000000							mov esi,0            ;esi is used as index to the word just built
+									invoke str_length,addr wordfromdataarray
+ 00000344  8B C8							mov ecx,eax
+ 00000346  D1 E9							shr ecx,1  ;this loop is run for word array copying, so the size is divided by 2
+							
+
+ 00000348							append_to_array:
+
+ 00000348  66| 8B 86							mov ax,wordfromdataarray[esi];		//
+	   000223D6 R
+ 0000034F  66| 89 04 1F							mov [edi+ebx],ax;					////
+ 00000353  83 C7 02							add edi,2;							//////  the word that was found as a part of speech will be appended to the part_of_speech_found array
+ 00000356  83 C6 02							add esi,2;							////
+ 00000359  E2 ED							loop append_to_array;				//
+ 0000035B  66| C7 04 3B							mov word ptr[ebx+edi],000Ah			;adding a newline to the end of the array
+	   000A
+								
+								
+								
+ 00000361  8B 4D FC						mov ecx,sizeofword;			//
+								;							////	
+ 00000364  8B 75 18						mov esi,numoffound;			//////		updating numoffound variable for part of speech (ex: numofadj)
+ 00000367  01 0E						add [esi],ecx;				//////
+ 00000369  83 06 02						add dword ptr[esi],2;		////
+								;							//
+							
+ 0000036C						exitcompare:
+ 0000036C  61					popad								;retreiving register values
+
+
+ 0000036D  BA 00000000				mov edx,0	;reset index to 0
+						
+ 00000372  51					push ecx;											//
+ 00000373  B9 00000018				mov ecx,24;;using ecx as index so starts at 24		////
+ 00000378					reset_word:;										//////				RESETTING string to empty again to get ready for next word
+ 00000378  66| C7 81					mov wordfromdataarray[ecx],0;					//////
+	   000223D6 R
+	   0000
+ 00000381  E2 F5					loop reset_word;								////
+ 00000383  59						pop ecx;										//
+
+							
+ 00000384				loopback:
+ 00000384  83 3D 000000F2 R			cmp found,1;  if word is found 
+	   01
+ 0000038B  74 0D				je exit_function  ;then no need to search further in list as the word is found,hence more efficient
+ 0000038D  83 C3 02				add ebx,2		;update ebx to point to next WORD
+
+ 00000390  49					dec ecx			;i didn't use a loop instruction here as it gave an error of "jump too far" so i decremented ecx and compared it to 0 manually
+ 00000391  83 F9 00				cmp ecx,0
+ 00000394  0F 85 FFFFFF3F			jne part_of_speech_detector_L1
+
+ 0000039A			exit_function:
+
+				ret
+ 0000039E			part_of_speech_detector endp
+
+ 0000039E			get_data proc, filename:ptr byte,destination:ptr word
+
+ 000003A1  8B 55 08		mov edx,filename
+ 000003A4  E8 00000000 E	call openinputfile
+ 000003A9  A3 00000000 R	mov filehandle,eax
+ 000003AE  A1 00000000 R	mov eax,filehandle
+ 000003B3  8B 55 0C		mov edx,destination
+ 000003B6  B9 00002710		mov ecx,10000
+ 000003BB  E8 00000000 E	call readfromfile
+
+				ret
+ 000003C4			get_data endp
+
+
+
+
+ 000003C4			write_part_of_speech_to_file proc,filename:ptr byte,source:ptr word,sizetowrite :dword
+
+ 000003C7  8B 55 08		mov edx, filename  ;create
+ 000003CA  E8 00000000 E	call createoutputfile
+ 000003CF  A3 00000000 R	mov filehandle,eax           ;file opened or not?
+ 000003D4  A1 00000000 R	mov eax,filehandle		
+ 000003D9  8B 55 0C		mov edx, source				;array index in edx
+ 000003DC  8B 4D 10		mov ecx,sizetowrite			;array size in ecx
+ 000003DF  E8 00000000 E	call writetofile			;write till ecx 0
+ 000003E4  A1 00000000 R	mov eax,filehandle
+ 000003E9  E8 00000000 E	call closefile
+
+				ret
+ 000003F2			write_part_of_speech_to_file endp
+
+				end main
+Microsoft (R) Macro Assembler Version 14.29.30146.0	    12/11/22 16:27:25
+task.asm						     Symbols 2 - 1
+
+
+
+
+Structures and Unions:
+
+                N a m e                  Size
+                                         Offset      Type
+
+CONSOLE_CURSOR_INFO  . . . . . .	 00000008
+  dwSize . . . . . . . . . . . .	 00000000	 DWord
+  bVisible . . . . . . . . . . .	 00000004	 DWord
+CONSOLE_SCREEN_BUFFER_INFO . . .	 00000016
+  dwSize . . . . . . . . . . . .	 00000000	 DWord
+  dwCursorPosition . . . . . . .	 00000004	 DWord
+  wAttributes  . . . . . . . . .	 00000008	 Word
+  srWindow . . . . . . . . . . .	 0000000A	 QWord
+  dwMaximumWindowSize  . . . . .	 00000012	 DWord
+COORD  . . . . . . . . . . . . .	 00000004
+  X  . . . . . . . . . . . . . .	 00000000	 Word
+  Y  . . . . . . . . . . . . . .	 00000002	 Word
+FILETIME . . . . . . . . . . . .	 00000008
+  loDateTime . . . . . . . . . .	 00000000	 DWord
+  hiDateTime . . . . . . . . . .	 00000004	 DWord
+FOCUS_EVENT_RECORD . . . . . . .	 00000004
+  bSetFocus  . . . . . . . . . .	 00000000	 DWord
+FPU_ENVIRON  . . . . . . . . . .	 0000001C
+  controlWord  . . . . . . . . .	 00000000	 Word
+  statusWord . . . . . . . . . .	 00000004	 Word
+  tagWord  . . . . . . . . . . .	 00000008	 Word
+  instrPointerOffset . . . . . .	 0000000C	 DWord
+  instrPointerSelector . . . . .	 00000010	 DWord
+  operandPointerOffset . . . . .	 00000014	 DWord
+  operandPointerSelector . . . .	 00000018	 Word
+INPUT_RECORD . . . . . . . . . .	 00000014
+  EventType  . . . . . . . . . .	 00000000	 Word
+  Event  . . . . . . . . . . . .	 00000004	 XmmWord
+  bKeyDown . . . . . . . . . . .	 00000000	 DWord
+  wRepeatCount . . . . . . . . .	 00000004	 Word
+  wVirtualKeyCode  . . . . . . .	 00000006	 Word
+  wVirtualScanCode . . . . . . .	 00000008	 Word
+  uChar  . . . . . . . . . . . .	 0000000A	 Word
+  UnicodeChar  . . . . . . . . .	 00000000	 Word
+  AsciiChar  . . . . . . . . . .	 00000000	 Byte
+  dwControlKeyState  . . . . . .	 0000000C	 DWord
+  dwMousePosition  . . . . . . .	 00000000	 DWord
+  dwButtonState  . . . . . . . .	 00000004	 DWord
+  dwMouseControlKeyState . . . .	 00000008	 DWord
+  dwEventFlags . . . . . . . . .	 0000000C	 DWord
+  dwSize . . . . . . . . . . . .	 00000000	 DWord
+  dwCommandId  . . . . . . . . .	 00000000	 DWord
+  bSetFocus  . . . . . . . . . .	 00000000	 DWord
+KEY_EVENT_RECORD . . . . . . . .	 00000010
+  bKeyDown . . . . . . . . . . .	 00000000	 DWord
+  wRepeatCount . . . . . . . . .	 00000004	 Word
+  wVirtualKeyCode  . . . . . . .	 00000006	 Word
+  wVirtualScanCode . . . . . . .	 00000008	 Word
+  uChar  . . . . . . . . . . . .	 0000000A	 Word
+  UnicodeChar  . . . . . . . . .	 00000000	 Word
+  AsciiChar  . . . . . . . . . .	 00000000	 Byte
+  dwControlKeyState  . . . . . .	 0000000C	 DWord
+MENU_EVENT_RECORD  . . . . . . .	 00000004
+  dwCommandId  . . . . . . . . .	 00000000	 DWord
+MOUSE_EVENT_RECORD . . . . . . .	 00000010
+  dwMousePosition  . . . . . . .	 00000000	 DWord
+  dwButtonState  . . . . . . . .	 00000004	 DWord
+  dwMouseControlKeyState . . . .	 00000008	 DWord
+  dwEventFlags . . . . . . . . .	 0000000C	 DWord
+SMALL_RECT . . . . . . . . . . .	 00000008
+  Left . . . . . . . . . . . . .	 00000000	 Word
+  Top  . . . . . . . . . . . . .	 00000002	 Word
+  Right  . . . . . . . . . . . .	 00000004	 Word
+  Bottom . . . . . . . . . . . .	 00000006	 Word
+SYSTEMTIME . . . . . . . . . . .	 00000010
+  wYear  . . . . . . . . . . . .	 00000000	 Word
+  wMonth . . . . . . . . . . . .	 00000002	 Word
+  wDayOfWeek . . . . . . . . . .	 00000004	 Word
+  wDay . . . . . . . . . . . . .	 00000006	 Word
+  wHour  . . . . . . . . . . . .	 00000008	 Word
+  wMinute  . . . . . . . . . . .	 0000000A	 Word
+  wSecond  . . . . . . . . . . .	 0000000C	 Word
+  wMilliseconds  . . . . . . . .	 0000000E	 Word
+WINDOW_BUFFER_SIZE_RECORD  . . .	 00000004
+  dwSize . . . . . . . . . . . .	 00000000	 DWord
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+FLAT . . . . . . . . . . . . . .	GROUP
+STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
+_DATA  . . . . . . . . . . . . .	32 Bit	 00025B06 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000003F2 Para	  Public  'CODE'	
+
+
+Procedures, parameters, and locals:
+
+                N a m e                 Type     Value    Attr
+
+CloseFile  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CloseHandle  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Clrscr . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateFileA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateOutputFile . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Crlf . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Delay  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DumpMem  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DumpRegs . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ExitProcess  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FileTimeToDosDateTime  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FileTimeToSystemTime . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FlushConsoleInputBuffer  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FormatMessageA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCommandLineA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCommandTail . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetConsoleCP . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetConsoleCursorInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetConsoleMode . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetConsoleScreenBufferInfo . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetDateTime  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetFileTime  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetKeyState  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetLastError . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetLocalTime . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetMaxXY . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetMseconds  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetNumberOfConsoleInputEvents  .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProcessHeap . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetStdHandle . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetSystemTime  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTextColor . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTickCount . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Gotoxy . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapAlloc  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapCreate . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapDestroy  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapFree . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapSize . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsDigit  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LocalFree  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MessageBoxA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MsgBoxAsk  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MsgBox . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenInputFile  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ParseDecimal32 . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ParseInteger32 . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+PeekConsoleInputA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Random32 . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RandomRange  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Randomize  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadChar . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadConsoleA . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadConsoleInputA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadDec  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadFile . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadFloat  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadFromFile . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadHex  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadInt  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadKeyFlush . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadKey  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadString . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleCursorInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleCursorPosition . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleMode . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleScreenBufferSize . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleTextAttribute  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleTitleA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleWindowInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetFilePointer . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetLocalTime . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetTextColor . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ShowFPUStack . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Sleep  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+StrLength  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Str_compare  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Str_copy . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Str_length . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Str_trim . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Str_ucase  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SystemTimeToFileTime . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WaitMsg  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteBinB  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteBin . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteChar  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteConsoleA  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteConsoleOutputAttribute  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteConsoleOutputCharacterA . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteDec . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteFile  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteFloat . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteHexB  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteHex . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteInt . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteStackFrameName  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+get_data . . . . . . . . . . . .	P Near	 0000039E _TEXT	Length= 00000026 Public STDCALL
+  filename . . . . . . . . . . .	DWord	 bp + 00000008
+  destination  . . . . . . . . .	DWord	 bp + 0000000C
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000002C0 Public STDCALL
+  loop_for_input_array . . . . .	L Near	 0000008E _TEXT	
+  checkforpartofspeech . . . . .	L Near	 000000B4 _TEXT	
+  append_to_noun . . . . . . . .	L Near	 000001C4 _TEXT	
+  continuelabel  . . . . . . . .	L Near	 000001EE _TEXT	
+  reset_word_input . . . . . . .	L Near	 00000203 _TEXT	
+  loopback_loop_for_input_array 	L Near	 0000020F _TEXT	
+  store_to_files . . . . . . . .	L Near	 0000021C _TEXT	
+  exitlabel  . . . . . . . . . .	L Near	 000002AF _TEXT	
+part_of_speech_detector  . . . .	P Near	 000002C0 _TEXT	Length= 000000DE Public STDCALL
+  bigstr . . . . . . . . . . . .	DWord	 bp + 00000008
+  bigsize  . . . . . . . . . . .	DWord	 bp + 0000000C
+  smallstr . . . . . . . . . . .	DWord	 bp + 00000010
+  listoffound  . . . . . . . . .	DWord	 bp + 00000014
+  numoffound . . . . . . . . . .	DWord	 bp + 00000018
+  sizeofword . . . . . . . . . .	DWord	 bp - 00000004
+  part_of_speech_detector_L1 . .	L Near	 000002D9 _TEXT	
+  compare_word . . . . . . . . .	L Near	 000002FC _TEXT	
+  write_to_part_of_speech_found_array 	L Near	 00000323 _TEXT	
+  append_to_array  . . . . . . .	L Near	 00000348 _TEXT	
+  exitcompare  . . . . . . . . .	L Near	 0000036C _TEXT	
+  reset_word . . . . . . . . . .	L Near	 00000378 _TEXT	
+  loopback . . . . . . . . . . .	L Near	 00000384 _TEXT	
+  exit_function  . . . . . . . .	L Near	 0000039A _TEXT	
+printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
+scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
+write_part_of_speech_to_file . .	P Near	 000003C4 _TEXT	Length= 0000002E Public STDCALL
+  filename . . . . . . . . . . .	DWord	 bp + 00000008
+  source . . . . . . . . . . . .	DWord	 bp + 0000000C
+  sizetowrite  . . . . . . . . .	DWord	 bp + 00000010
+wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+@CodeSize  . . . . . . . . . . .	Number	 00000000h   
+@DataSize  . . . . . . . . . . .	Number	 00000000h   
+@Interface . . . . . . . . . . .	Number	 00000003h   
+@Model . . . . . . . . . . . . .	Number	 00000007h   
+@code  . . . . . . . . . . . . .	Text   	 _TEXT
+@data  . . . . . . . . . . . . .	Text   	 FLAT
+@fardata?  . . . . . . . . . . .	Text   	 FLAT
+@fardata . . . . . . . . . . . .	Text   	 FLAT
+@stack . . . . . . . . . . . . .	Text   	 FLAT
+ALT_MASK . . . . . . . . . . . .	Number	 00000003h   
+CAPSLOCK_ON  . . . . . . . . . .	Number	 00000080h   
+CREATE_ALWAYS  . . . . . . . . .	Number	 00000002h   
+CREATE_NEW . . . . . . . . . . .	Number	 00000001h   
+CTRL_MASK  . . . . . . . . . . .	Number	 0000000Ch   
+CreateFile . . . . . . . . . . .	Text   	 CreateFileA
+DO_NOT_SHARE . . . . . . . . . .	Number	 00000000h   
+ENABLE_ECHO_INPUT  . . . . . . .	Number	 00000004h   
+ENABLE_LINE_INPUT  . . . . . . .	Number	 00000002h   
+ENABLE_MOUSE_INPUT . . . . . . .	Number	 00000010h   
+ENABLE_PROCESSED_INPUT . . . . .	Number	 00000001h   
+ENABLE_PROCESSED_OUTPUT  . . . .	Number	 00000001h   
+ENABLE_WINDOW_INPUT  . . . . . .	Number	 00000008h   
+ENABLE_WRAP_AT_EOL_OUTPUT  . . .	Number	 00000002h   
+ENHANCED_KEY . . . . . . . . . .	Number	 00000100h   
+FALSE  . . . . . . . . . . . . .	Number	 00000000h   
+FILE_APPEND_DATA . . . . . . . .	Number	 00000004h   
+FILE_ATTRIBUTE_ARCHIVE . . . . .	Number	 00000020h   
+FILE_ATTRIBUTE_COMPRESSED  . . .	Number	 00000800h   
+FILE_ATTRIBUTE_DEVICE  . . . . .	Number	 00000040h   
+FILE_ATTRIBUTE_DIRECTORY . . . .	Number	 00000010h   
+FILE_ATTRIBUTE_ENCRYPTED . . . .	Number	 00004000h   
+FILE_ATTRIBUTE_HIDDEN  . . . . .	Number	 00000002h   
+FILE_ATTRIBUTE_NORMAL  . . . . .	Number	 00000080h   
+FILE_ATTRIBUTE_NOT_CONTENT_INDEXED .	Number	 00002000h   
+FILE_ATTRIBUTE_OFFLINE . . . . .	Number	 00001000h   
+FILE_ATTRIBUTE_READONLY  . . . .	Number	 00000001h   
+FILE_ATTRIBUTE_REPARSE_POINT . .	Number	 00000400h   
+FILE_ATTRIBUTE_SPARSE_FILE . . .	Number	 00000200h   
+FILE_ATTRIBUTE_SYSTEM  . . . . .	Number	 00000004h   
+FILE_ATTRIBUTE_TEMPORARY . . . .	Number	 00000100h   
+FILE_BEGIN . . . . . . . . . . .	Number	 00000000h   
+FILE_CURRENT . . . . . . . . . .	Number	 00000001h   
+FILE_DELETE_CHILD  . . . . . . .	Number	 00000040h   
+FILE_END . . . . . . . . . . . .	Number	 00000002h   
+FILE_READ_DATA . . . . . . . . .	Number	 00000001h   
+FILE_SHARE_DELETE  . . . . . . .	Number	 00000004h   
+FILE_SHARE_READ  . . . . . . . .	Number	 00000001h   
+FILE_SHARE_WRITE . . . . . . . .	Number	 00000002h   
+FILE_WRITE_DATA  . . . . . . . .	Number	 00000002h   
+FOCUS_EVENT  . . . . . . . . . .	Number	 00000010h   
+FORMAT_MESSAGE_ALLOCATE_BUFFER .	Number	 00000100h   
+FORMAT_MESSAGE_FROM_SYSTEM . . .	Number	 00001000h   
+FormatMessage  . . . . . . . . .	Text   	 FormatMessageA
+GENERIC_ALL  . . . . . . . . . .	Number	 10000000h   
+GENERIC_EXECUTE  . . . . . . . .	Number	 20000000h   
+GENERIC_READ . . . . . . . . . .	Number	 -80000000h   
+GENERIC_WRITE  . . . . . . . . .	Number	 40000000h   
+GetCommandLine . . . . . . . . .	Text   	 GetCommandLineA
+HANDLE . . . . . . . . . . . . .	Text   	 DWORD
+HEAP_GENERATE_EXCEPTIONS . . . .	Number	 00000004h   
+HEAP_GROWABLE  . . . . . . . . .	Number	 00000002h   
+HEAP_NO_SERIALIZE  . . . . . . .	Number	 00000001h   
+HEAP_REALLOC_IN_PLACE_ONLY . . .	Number	 00000010h   
+HEAP_ZERO_MEMORY . . . . . . . .	Number	 00000008h   
+IDABORT  . . . . . . . . . . . .	Number	 00000003h   
+IDCANCEL . . . . . . . . . . . .	Number	 00000002h   
+IDCLOSE  . . . . . . . . . . . .	Number	 00000008h   
+IDCONTINUE . . . . . . . . . . .	Number	 0000000Bh   
+IDHELP . . . . . . . . . . . . .	Number	 00000009h   
+IDIGNORE . . . . . . . . . . . .	Number	 00000005h   
+IDNO . . . . . . . . . . . . . .	Number	 00000007h   
+IDOK . . . . . . . . . . . . . .	Number	 00000001h   
+IDRETRY  . . . . . . . . . . . .	Number	 00000004h   
+IDTIMEOUT  . . . . . . . . . . .	Number	 00007D00h   
+IDTRYAGAIN . . . . . . . . . . .	Number	 0000000Ah   
+IDYES  . . . . . . . . . . . . .	Number	 00000006h   
+INVALID_HANDLE_VALUE . . . . . .	Number	 -00000001h   
+KBDOWN_FLAG  . . . . . . . . . .	Number	 00000001h   
+KEY_EVENT  . . . . . . . . . . .	Number	 00000001h   
+KEY_MASKS  . . . . . . . . . . .	Number	 0000001Fh   
+LEFT_ALT_PRESSED . . . . . . . .	Number	 00000002h   
+LEFT_CTRL_PRESSED  . . . . . . .	Number	 00000008h   
+MB_ABORTRETRYIGNORE  . . . . . .	Number	 00000002h   
+MB_APPLMODAL . . . . . . . . . .	Number	 00000000h   
+MB_CANCELTRYCONTINUE . . . . . .	Number	 00000006h   
+MB_DEFBUTTON1  . . . . . . . . .	Number	 00000000h   
+MB_DEFBUTTON2  . . . . . . . . .	Number	 00000100h   
+MB_DEFBUTTON3  . . . . . . . . .	Number	 00000200h   
+MB_DEFBUTTON4  . . . . . . . . .	Number	 00000300h   
+MB_HELP  . . . . . . . . . . . .	Number	 00004000h   
+MB_ICONASTERISK  . . . . . . . .	Number	 00000040h   
+MB_ICONERROR . . . . . . . . . .	Number	 00000010h   
+MB_ICONEXCLAMATION . . . . . . .	Number	 00000030h   
+MB_ICONHAND  . . . . . . . . . .	Number	 00000010h   
+MB_ICONINFORMATION . . . . . . .	Number	 00000040h   
+MB_ICONQUESTION  . . . . . . . .	Number	 00000020h   
+MB_ICONSTOP  . . . . . . . . . .	Number	 00000010h   
+MB_ICONWARNING . . . . . . . . .	Number	 00000030h   
+MB_OKCANCEL  . . . . . . . . . .	Number	 00000001h   
+MB_OK  . . . . . . . . . . . . .	Number	 00000000h   
+MB_RETRYCANCEL . . . . . . . . .	Number	 00000005h   
+MB_SYSTEMMODAL . . . . . . . . .	Number	 00001000h   
+MB_TASKMODAL . . . . . . . . . .	Number	 00002000h   
+MB_USERICON  . . . . . . . . . .	Number	 00000080h   
+MB_YESNOCANCEL . . . . . . . . .	Number	 00000003h   
+MB_YESNO . . . . . . . . . . . .	Number	 00000004h   
+MENU_EVENT . . . . . . . . . . .	Number	 00000008h   
+MOUSE_EVENT  . . . . . . . . . .	Number	 00000002h   
+MessageBox . . . . . . . . . . .	Text   	 MessageBoxA
+NULL . . . . . . . . . . . . . .	Number	 00000000h   
+NUMLOCK_ON . . . . . . . . . . .	Number	 00000020h   
+OPEN_ALWAYS  . . . . . . . . . .	Number	 00000004h   
+OPEN_EXISTING  . . . . . . . . .	Number	 00000003h   
+PeekConsoleInput . . . . . . . .	Text   	 PeekConsoleInputA
+RIGHT_ALT_PRESSED  . . . . . . .	Number	 00000001h   
+RIGHT_CTRL_PRESSED . . . . . . .	Number	 00000004h   
+ReadConsoleInput . . . . . . . .	Text   	 ReadConsoleInputA
+ReadConsole  . . . . . . . . . .	Text   	 ReadConsoleA
+SCROLLLOCK_ON  . . . . . . . . .	Number	 00000040h   
+SHIFT_MASK . . . . . . . . . . .	Number	 00000010h   
+SHIFT_PRESSED  . . . . . . . . .	Number	 00000010h   
+STD_ERROR_HANDLE . . . . . . . .	Number	 -0000000Ch   
+STD_INPUT_HANDLE . . . . . . . .	Number	 -0000000Ah   
+STD_OUTPUT_HANDLE  . . . . . . .	Number	 -0000000Bh   
+SetConsoleTitle  . . . . . . . .	Text   	 SetConsoleTitleA
+TAB  . . . . . . . . . . . . . .	Number	 00000009h   
+TRUE . . . . . . . . . . . . . .	Number	 00000001h   
+TRUNCATE_EXISTING  . . . . . . .	Number	 00000005h   
+VK_11  . . . . . . . . . . . . .	Number	 000000BDh   
+VK_12  . . . . . . . . . . . . .	Number	 000000BBh   
+VK_ADD . . . . . . . . . . . . .	Number	 0000006Bh   
+VK_BACK  . . . . . . . . . . . .	Number	 00000008h   
+VK_CANCEL  . . . . . . . . . . .	Number	 00000003h   
+VK_CAPITAL . . . . . . . . . . .	Number	 00000014h   
+VK_CLEAR . . . . . . . . . . . .	Number	 0000000Ch   
+VK_CONTROL . . . . . . . . . . .	Number	 00000011h   
+VK_DECIMAL . . . . . . . . . . .	Number	 0000006Eh   
+VK_DELETE  . . . . . . . . . . .	Number	 0000002Eh   
+VK_DIVIDE  . . . . . . . . . . .	Number	 0000006Fh   
+VK_DOWN  . . . . . . . . . . . .	Number	 00000028h   
+VK_END . . . . . . . . . . . . .	Number	 00000023h   
+VK_ESCAPE  . . . . . . . . . . .	Number	 0000001Bh   
+VK_EXECUTE . . . . . . . . . . .	Number	 0000002Bh   
+VK_F10 . . . . . . . . . . . . .	Number	 00000079h   
+VK_F11 . . . . . . . . . . . . .	Number	 0000007Ah   
+VK_F12 . . . . . . . . . . . . .	Number	 0000007Bh   
+VK_F13 . . . . . . . . . . . . .	Number	 0000007Ch   
+VK_F14 . . . . . . . . . . . . .	Number	 0000007Dh   
+VK_F15 . . . . . . . . . . . . .	Number	 0000007Eh   
+VK_F16 . . . . . . . . . . . . .	Number	 0000007Fh   
+VK_F17 . . . . . . . . . . . . .	Number	 00000080h   
+VK_F18 . . . . . . . . . . . . .	Number	 00000081h   
+VK_F19 . . . . . . . . . . . . .	Number	 00000082h   
+VK_F1  . . . . . . . . . . . . .	Number	 00000070h   
+VK_F20 . . . . . . . . . . . . .	Number	 00000083h   
+VK_F21 . . . . . . . . . . . . .	Number	 00000084h   
+VK_F22 . . . . . . . . . . . . .	Number	 00000085h   
+VK_F23 . . . . . . . . . . . . .	Number	 00000086h   
+VK_F24 . . . . . . . . . . . . .	Number	 00000087h   
+VK_F2  . . . . . . . . . . . . .	Number	 00000071h   
+VK_F3  . . . . . . . . . . . . .	Number	 00000072h   
+VK_F4  . . . . . . . . . . . . .	Number	 00000073h   
+VK_F5  . . . . . . . . . . . . .	Number	 00000074h   
+VK_F6  . . . . . . . . . . . . .	Number	 00000075h   
+VK_F7  . . . . . . . . . . . . .	Number	 00000076h   
+VK_F8  . . . . . . . . . . . . .	Number	 00000077h   
+VK_F9  . . . . . . . . . . . . .	Number	 00000078h   
+VK_HELP  . . . . . . . . . . . .	Number	 0000002Fh   
+VK_HOME  . . . . . . . . . . . .	Number	 00000024h   
+VK_INSERT  . . . . . . . . . . .	Number	 0000002Dh   
+VK_LBUTTON . . . . . . . . . . .	Number	 00000001h   
+VK_LCONTROL  . . . . . . . . . .	Number	 000000A2h   
+VK_LEFT  . . . . . . . . . . . .	Number	 00000025h   
+VK_LMENU . . . . . . . . . . . .	Number	 000000A4h   
+VK_LSHIFT  . . . . . . . . . . .	Number	 000000A0h   
+VK_MENU  . . . . . . . . . . . .	Number	 00000012h   
+VK_MULTIPLY  . . . . . . . . . .	Number	 0000006Ah   
+VK_NEXT  . . . . . . . . . . . .	Number	 00000022h   
+VK_NUMLOCK . . . . . . . . . . .	Number	 00000090h   
+VK_NUMPAD0 . . . . . . . . . . .	Number	 00000060h   
+VK_NUMPAD1 . . . . . . . . . . .	Number	 00000061h   
+VK_NUMPAD2 . . . . . . . . . . .	Number	 00000062h   
+VK_NUMPAD3 . . . . . . . . . . .	Number	 00000063h   
+VK_NUMPAD4 . . . . . . . . . . .	Number	 00000064h   
+VK_NUMPAD5 . . . . . . . . . . .	Number	 00000065h   
+VK_NUMPAD6 . . . . . . . . . . .	Number	 00000066h   
+VK_NUMPAD7 . . . . . . . . . . .	Number	 00000067h   
+VK_NUMPAD8 . . . . . . . . . . .	Number	 00000068h   
+VK_NUMPAD9 . . . . . . . . . . .	Number	 00000069h   
+VK_PAUSE . . . . . . . . . . . .	Number	 00000013h   
+VK_PRINT . . . . . . . . . . . .	Number	 0000002Ah   
+VK_PRIOR . . . . . . . . . . . .	Number	 00000021h   
+VK_RBUTTON . . . . . . . . . . .	Number	 00000002h   
+VK_RCONTROL  . . . . . . . . . .	Number	 000000A3h   
+VK_RETURN  . . . . . . . . . . .	Number	 0000000Dh   
+VK_RIGHT . . . . . . . . . . . .	Number	 00000027h   
+VK_RMENU . . . . . . . . . . . .	Number	 000000A5h   
+VK_RSHIFT  . . . . . . . . . . .	Number	 000000A1h   
+VK_SCROLL  . . . . . . . . . . .	Number	 00000091h   
+VK_SEPARATER . . . . . . . . . .	Number	 0000006Ch   
+VK_SHIFT . . . . . . . . . . . .	Number	 00000010h   
+VK_SNAPSHOT  . . . . . . . . . .	Number	 0000002Ch   
+VK_SPACE . . . . . . . . . . . .	Number	 00000020h   
+VK_SUBTRACT  . . . . . . . . . .	Number	 0000006Dh   
+VK_TAB . . . . . . . . . . . . .	Number	 00000009h   
+VK_UP  . . . . . . . . . . . . .	Number	 00000026h   
+WINDOW_BUFFER_SIZE_EVENT . . . .	Number	 00000004h   
+WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
+WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
+adjectivefile  . . . . . . . . .	Byte	 00000023 _DATA	
+adjectivesfound  . . . . . . . .	Word	 0002243A _DATA	
+adverbfile . . . . . . . . . . .	Byte	 0000007B _DATA	
+adverbsfound . . . . . . . . . .	Word	 00023BB6 _DATA	
+black  . . . . . . . . . . . . .	Number	 00000000h   
+blue . . . . . . . . . . . . . .	Number	 00000001h   
+brown  . . . . . . . . . . . . .	Number	 00000006h   
+conjunctionfile  . . . . . . . .	Byte	 0000009D _DATA	
+conjunctionsfound  . . . . . . .	Word	 0002438A _DATA	
+cyan . . . . . . . . . . . . . .	Number	 00000003h   
+exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
+filehandle . . . . . . . . . . .	DWord	 00000000 _DATA	
+found  . . . . . . . . . . . . .	DWord	 000000F2 _DATA	
+gray . . . . . . . . . . . . . .	Number	 00000008h   
+green  . . . . . . . . . . . . .	Number	 00000002h   
+inputarray . . . . . . . . . . .	Word	 000000F6 _DATA	
+inputfile  . . . . . . . . . . .	Byte	 00000004 _DATA	
+lightBlue  . . . . . . . . . . .	Number	 00000009h   
+lightCyan  . . . . . . . . . . .	Number	 0000000Bh   
+lightGray  . . . . . . . . . . .	Number	 00000007h   
+lightGreen . . . . . . . . . . .	Number	 0000000Ah   
+lightMagenta . . . . . . . . . .	Number	 0000000Dh   
+lightRed . . . . . . . . . . . .	Number	 0000000Ch   
+listofadjectivesfile . . . . . .	Byte	 0000000E _DATA	
+listofadjectives . . . . . . . .	Word	 00004F16 _DATA	
+listofadverbsfile  . . . . . . .	Byte	 00000069 _DATA	
+listofadverbs  . . . . . . . . .	Word	 00013976 _DATA	
+listofconjunctionsfile . . . . .	Byte	 00000086 _DATA	
+listofconjunctions . . . . . . .	Word	 00018796 _DATA	
+listofprepositionsfile . . . . .	Byte	 000000AD _DATA	
+listofprepositions . . . . . . .	Word	 0001D5B6 _DATA	
+listofpronounsfile . . . . . . .	Byte	 0000004A _DATA	
+listofpronouns . . . . . . . . .	Word	 0000EB56 _DATA	
+listofverbsfile  . . . . . . . .	Byte	 00000031 _DATA	
+listofverbs  . . . . . . . . . .	Word	 00009D36 _DATA	
+magenta  . . . . . . . . . . . .	Number	 00000005h   
+nounfile . . . . . . . . . . . .	Byte	 000000D4 _DATA	
+nounsfound . . . . . . . . . . .	Word	 00025332 _DATA	
+numofadj . . . . . . . . . . . .	DWord	 00022C0A _DATA	
+numofadverb  . . . . . . . . . .	DWord	 00024386 _DATA	
+numofconjunction . . . . . . . .	DWord	 00024B5A _DATA	
+numofnoun  . . . . . . . . . . .	DWord	 00025B02 _DATA	
+numofpreposition . . . . . . . .	DWord	 0002532E _DATA	
+numofpronoun . . . . . . . . . .	DWord	 00023BB2 _DATA	
+numofverb  . . . . . . . . . . .	DWord	 000233DE _DATA	
+prepositionfile  . . . . . . . .	Byte	 000000C4 _DATA	
+prepositionsfound  . . . . . . .	Word	 00024B5E _DATA	
+pronounfile  . . . . . . . . . .	Byte	 0000005D _DATA	
+pronounsfound  . . . . . . . . .	Word	 000233E2 _DATA	
+red  . . . . . . . . . . . . . .	Number	 00000004h   
+s1 . . . . . . . . . . . . . . .	Byte	 000000DD _DATA	
+s2 . . . . . . . . . . . . . . .	Byte	 000000E9 _DATA	
+verbfile . . . . . . . . . . . .	Byte	 00000041 _DATA	
+verbsfound . . . . . . . . . . .	Word	 00022C0E _DATA	
+white  . . . . . . . . . . . . .	Number	 0000000Fh   
+wordfromdataarray  . . . . . . .	Word	 000223D6 _DATA	
+wordfrominputarray . . . . . . .	Word	 00022408 _DATA	
+wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
+yellow . . . . . . . . . . . . .	Number	 0000000Eh   
+
+	   0 Warnings
+	   0 Errors
